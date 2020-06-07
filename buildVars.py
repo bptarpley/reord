@@ -11,18 +11,17 @@ addon_info = {
 	# for previously unpublished addons, please follow the community guidelines at:
 	# https://bitbucket.org/nvdaaddonteam/todo/raw/master/guideLines.txt
 	# add-on Name, internal for nvda
-	"addon_name" : "translate",
+	"addon_name" : "transliterate-oe",
 	# Add-on summary, usually the user visible name of the addon.
 	# Translators: Summary for this add-on to be shown on installation and add-on information.
-	"addon_summary" : _("Translate"),
+	"addon_summary" : _("Transliterate Old English"),
 	# Add-on description
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
-	"addon_description" : _("""Uses the Google Translate API to translate each spoken text to the desired language, on the fly.
-This add-on requires an internet connection."""),
+	"addon_description" : _("""Uses a custom algorithm for detecting Old English and transliterating accordingly."""),
 	# version
-	"addon_version" : "2020.06",
+	"addon_version" : "2020.00",
 	# Author(s)
-	"addon_author" : u"Yannick PLASSIARD <podcastcecitek@gmail.com>",
+	"addon_author" : u"Bryan Tarpley <bptarpley@tamu.edu>",
 	# URL for the add-on documentation support
 	"addon_url" : None,
 	# Documentation file name
@@ -40,7 +39,7 @@ import os.path
 
 # Define the python files that are the sources of your add-on.
 # You can use glob expressions here, they will be expanded.
-pythonSources = ['addon/globalPlugins/translate/*.py', 'addon/globalPlugins/translate/*/*.py']
+pythonSources = ['addon/globalPlugins/transliterate/*.py', 'addon/globalPlugins/transliterate/*/*.py']
 
 # Files that contain strings for translation. Usually your python sources
 i18nSources = pythonSources + ["buildVars.py"]
