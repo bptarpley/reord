@@ -1,16 +1,9 @@
 # *-* coding: utf-8 *-*
-# translate/__init__.py
-#A part of the NVDA Translate add-on
+# transliterate/__init__.py
+#Much of this code adopted from the NVDA Translate add-on:
 #Copyright (C) 2018 Yannick PLASSIARD
 #This file is covered by the GNU General Public License.
 #See the file LICENSE for more details.
-#This add-on also uses the following external libraries:
-#markupbase, htmlentitydefs, HTMLParser: Come from the Python2 standard installation.
-#mtranslate: MIT License
-
-# Moreover, the mtranslate package relies on URLLib, part of Python2 standard installation to
-# connect to the Google Translate server.
-
 
 
 import os, sys, time, codecs, re
@@ -27,11 +20,10 @@ try:
 
 	sys.path.insert(0, curDir)
 	sys.path.insert(0, os.path.join(curDir, "html"))
-	import markupbase
-	import mtranslate
 	import addonHandler, languageHandler
+
 except Exception as e:
-	logHanaler.log.exception("Failed to initialize translate addon", e)
+	logHanaler.log.exception("Failed to initialize transliterate addon", e)
 	raise e
 
 addonHandler.initTranslation()
@@ -49,35 +41,24 @@ _lastTranslatedText = None
 _lastTranslatedTextTime = 0
 
 
-def translate(text):
-	"""translates the given text to the desired language.
-Stores the result into the cache so that the same translation does not asks Google servers too often.
+def transliterate(text):
+	"""transliterates Old English text
 	"""
-	global _translationCache, _enableTranslation, _gpObject
+	global _enableTransliteration
 
 	try:
 		appName = globalVars.focusObject.appModule.appName
 	except:
 		appName = "__global__"
-		
-	if _gpObject is None or _enableTranslation is False:
-		return text
-	appTable = _translationCache.get(appName, None)
-	if appTable is None:
-		_translationCache[appName] = {}
-	translated = _translationCache[appName].get(text, None)
-	if translated is not None and translated != text:
-		return translated
+
 	try:
+		logHandler.log.info(text + '--__--__--__--__--')
 		prepared = text.encode('utf8', ':/')
-		translated = mtranslate.translate(prepared, _gpObject.language)
+		#translated = mtranslate.translate(prepared, _gpObject.language)
 	except Exception as e:
 		return text
-	if translated is None or len(translated) == 0:
-		translated = text
-	else:
-		_translationCache[appName][text] = translated
-	return translated
+
+	return text
 
 
 #
@@ -93,7 +74,7 @@ def speak(speechSequence: SpeechSequence,
 	newSpeechSequence = []
 	for val in speechSequence:
 		if isinstance(val, str):
-			v = translate(val)
+			v = transliterate(val)
 			newSpeechSequence.append(v if v is not None else val)
 		else:
 			newSpeechSequence.append(val)
@@ -114,7 +95,7 @@ def getPropertiesSpeech(	# noqa: C901
 	textList: List[str] = []
 	name: Optional[str] = propertyValues.get('name')
 	if name:
-		textList.append(translate(name))
+		textList.append(transliterate(name))
 	if 'role' in propertyValues:
 		role=propertyValues['role']
 		speakRole=True
@@ -158,9 +139,9 @@ def getPropertiesSpeech(	# noqa: C901
 				controlTypes.REASON_SAYALL
 			)
 	)):
-		textList.append(translate(roleText) if roleText else controlTypes.roleLabels[role])
+		textList.append(transliterate(roleText) if roleText else controlTypes.roleLabels[role])
 	if value:
-		textList.append(translate(value))
+		textList.append(transliterate(value))
 	states=propertyValues.get('states',set())
 	realStates=propertyValues.get('_states',states)
 	negativeStates=propertyValues.get('negativeStates',set())
@@ -170,7 +151,7 @@ def getPropertiesSpeech(	# noqa: C901
 	# sometimes description key is present but value is None
 	description: Optional[str] = propertyValues.get('description')
 	if description:
-		textList.append(translate(description))
+		textList.append(transliterate(description))
 	# sometimes keyboardShortcut key is present but value is None
 	keyboardShortcut: Optional[str] = propertyValues.get('keyboardShortcut')
 	if keyboardShortcut:
@@ -206,7 +187,7 @@ def getPropertiesSpeech(	# noqa: C901
 		if columnNumber and (not sameTable or columnNumber != oldColumnNumber or columnSpan != oldColumnSpan):
 			columnHeaderText: Optional[str] = propertyValues.get("columnHeaderText")
 			if columnHeaderText:
-				textList.append(translate(columnHeaderText))
+				textList.append(transliterate(columnHeaderText))
 			if includeTableCellCoords and not cellCoordsText:
 				# Translators: Speaks current column number (example output: column 3).
 				colNumberTranslation: str = _("column %s") % columnNumber
@@ -256,7 +237,7 @@ def getPropertiesSpeech(	# noqa: C901
 			textList.append(ariaCurrentLabel)
 	placeholder: Optional[str] = propertyValues.get('placeholder', None)
 	if placeholder:
-		textList.append(translate(placeholder))
+		textList.append(transliterate(placeholder))
 	indexInGroup=propertyValues.get('positionInfo_indexInGroup',0)
 	similarItemsInGroup=propertyValues.get('positionInfo_similarItemsInGroup',0)
 	if 0<indexInGroup<=similarItemsInGroup:
@@ -293,7 +274,7 @@ def getPropertiesSpeech(	# noqa: C901
 #
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
-	scriptCategory = _("Translate")
+	scriptCategory = _("Transliterate")
 	language = None
 
 	def __init__(self):
@@ -321,7 +302,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		_nvdaGetPropertiesSpeech = speech.getPropertiesSpeech
 		speech._manager.speak = speak
 		speech.getPropertiesSpeech = _nvdaGetPropertiesSpeech
-		self.loadLocalCache()
 		
 
 	def terminate(self):
@@ -329,126 +309,19 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		global _nvdaGetPropertiesSpeech, _nvdaSpeak
 		speech._manager.speak = _nvdaSpeak
 		speech.getPropertiesSpeech = _nvdaGetPropertiesSpeech
-		self.saveLocalCache()
 
-	def loadLocalCache(self):
-		global _translationCache
-
-		path = os.path.join(globalVars.appArgs.configPath, "translation-cache")
-		# Checks that the storage path exists or create it.
-		if os.path.exists(path) is False:
-			try:
-				os.mkdir(path)
-			except Exception as e:
-				logHandler.log.error("Failed to create storage path: {path} ({error})".format(path=path, error=e))
-				return
-												
-			# Scan stored files and load them.
-		
-		for entry in os.listdir(path):
-			m = re.match("(.*)\.json$", entry)
-			if m is not None:
-				appName = m.group(1)
-				try:
-					cacheFile = codecs.open(os.path.join(path, entry), "r", "utf-8")
-				except:
-					continue
-				try:
-					values = json.load(cacheFile)
-					cacheFile.close()
-				except Exception as e:
-					logHandler.log.error("Cannot read or decode data from {path}: {e}".format(path=path, e=e))
-					cacheFile.close()
-					continue
-				_translationCache[appName] = values
-				cacheFile.close()
-	def saveLocalCache(self):
-		global _translationCache
-
-		path = os.path.join(globalVars.appArgs.configPath, "translation-cache")
-		for appName in _translationCache:
-			file = os.path.join(path, "%s.json" %(appName))
-			try:
-				cacheFile = codecs.open(file, "w", "utf-8")
-				json.dump(_translationCache[appName], cacheFile)
-				cacheFile.close()
-			except Exception as e:
-				logHandler.log.error("Failed to save translation cache for {app} to {file}: {error}".format(apap=appName, file=file, error=e))
-				continue
 
 	def script_toggleTranslate(self, gesture):
-		global _enableTranslation
+		global _enableTransliteration
 		
-		_enableTranslation = not _enableTranslation
+		_enableTranslation = not _enableTransliteration
 		if _enableTranslation:
-			ui.message(_("Translation enabled."))
+			ui.message(_("OE Transliteration enabled."))
 		else:
-			ui.message(_("Translation disabled."))
+			ui.message(_("OE Transliteration disabled."))
 
-	script_toggleTranslate.__doc__ = _("Enables translation to the desired language.")
-
-	def script_copyLastTranslation(self, gesture):
-		global _lastTranslatedText
-
-		if _lastTranslatedText is not None and len(_lastTranslatedText) > 0:
-			api.copyToClip(_lastTranslatedText)
-			ui.message(_("translation {text} ¨copied to clipboard".format(text=_lastTranslatedText)))
-		else:
-			ui.message(_("No translation to copy"))
-	script_copyLastTranslation.__doc__ = _("Copy the latest translated text to the clipboard.")
-								 
-	def script_flushAllCache(self, gesture):
-		if scriptHandler.getLastScriptRepeatCount() == 0:
-			ui.message(_("Press twice to delete all cached translations for all applications."))
-			return
-		global _translationCache
-		_translationCache = {}
-		path = os.path.join(globalVars.appArgs.configPath, "translation-cache")
-		error = False
-		for entry in os.listdir(path):
-			try:
-				os.unlink(os.path.join(path, entry))
-			except Exception as e:
-				logHandler.log.error("Failed to remove {entry}".format(entry=entry))
-				error = True
-		if not error:
-			ui.message(_("All translations have been deleted."))
-		else:
-			ui.message(_("Some caches failed to be removed."))
-	script_flushAllCache.__doc__ = _("Remove all cached translations for all applications.")
-
-	def script_flushCurrentAppCache(self, gesture):
-		try:
-			appName = globalVars.focusObject.appModule.appName
-		except:
-			ui.message(_("No focused application"))
-			return
-		if scriptHandler.getLastScriptRepeatCount() == 0:
-			ui.message(_("Press twice to delete all translations for {app}".format(app=appName)))
-			return
-		
-		global _translationCache
-			
-		_translationCache[appName] = {}
-		fullPath = os.path.join(globalVars.appArgs.configPath, "translation-cache", "{app}.json".format(app=appName))
-		if os.path.exists(fullPath):
-			try:
-				os.unlink(fullPath)
-			except Exception as e:
-				logHandler.log.error("Failed to remove cache for {appName}: {e}".format(appName=appName, e=e))
-				ui.message(_("Error while deleting application's translation cache."))
-				return
-			ui.message(_("Translation cache for {app} has been deleted.".format(app=appName)))
-		else:
-			ui.message(_("No saved translations for {app}".format(app=appName)))
-			
-	script_flushCurrentAppCache.__doc__ = _("Remove translation cache for the currently focused application")
-																
-																 
+	script_toggleTranslate.__doc__ = _("Enables Old English transliteration.")
 
 	__gestures = {
 		"kb:nvda+shift+control+t": "toggleTranslate",
-		"kb:nvda+shift+c": "copyLastTranslation",
-		"kb:nvda+shift+control+f": "flushAllCache",
-		"kb:nvda+shift+f": "flushCurrentAppCache",
 	}

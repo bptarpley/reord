@@ -8,3 +8,4 @@ addon/doc/*/*.html
 *.pyc
 *.nvda-addon
 .sconsign.dblite
+.idea
