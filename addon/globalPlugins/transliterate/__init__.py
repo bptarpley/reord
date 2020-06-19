@@ -36,7 +36,7 @@ _nvdaSpeak = None
 _nvdaGetPropertiesSpeech = None
 _gpObject = None
 _lastError = 0
-_enableTranslation = False
+_enableTransliteration = False
 _lastTranslatedText = None
 _lastTranslatedTextTime = 0
 
