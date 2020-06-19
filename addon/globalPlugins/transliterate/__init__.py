@@ -67,9 +67,9 @@ def transliterate(text):
 
 def speak(speechSequence: SpeechSequence,
 					priority: Optional[Spri] = None):
-	global _enableTranslation, _lastTranslatedText
+	global _enableTransliteration, _lastTranslatedText
 
-	if _enableTranslation is False:
+	if _enableTransliteration is False:
 		return _nvdaSpeak(speechSequence=speechSequence, priority=priority)
 	newSpeechSequence = []
 	for val in speechSequence:
@@ -314,8 +314,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def script_toggleTranslate(self, gesture):
 		global _enableTransliteration
 		
-		_enableTranslation = not _enableTransliteration
-		if _enableTranslation:
+		_enableTransliteration = not _enableTransliteration
+		if _enableTransliteration:
 			ui.message(_("OE Transliteration enabled."))
 		else:
 			ui.message(_("OE Transliteration disabled."))
