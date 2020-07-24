@@ -287,54 +287,102 @@ def transliterate(text):
 	except:
 		appName = "__global__"
 
+	debug_log = None
+	if 'debug_transliterations' in _transliterations:
+		debug_log = "Transliteration debug info: "
+
 	try:
 		new_text = ""
 		oe_text = text.lower()
 
+		# going to try to keep a list of tuples where
+		# first item is a "clause" (any text preceding punctuation)
+		# and second item is the punctuation following the clause.
+		# the idea is to transliterate these clauses and then stitch
+		# them back together using original punctuation.
+		clause_tuples = []
+
+		# building list of punctuation marks
 		punct_list = list(punctuation)
 		punct_list.extend(["“", "”"])
 
-		for punct in punct_list:
-			oe_text = oe_text.replace(punct, ' ')
+		starting_clause_index = 0
+		for char_cursor in range(0, len(oe_text)):
+			if oe_text[char_cursor] in punct_list:
+				clause_tuples.append(
+					(
+						oe_text[starting_clause_index:char_cursor],
+						oe_text[char_cursor]
+					)
+				)
+				starting_clause_index = char_cursor + 1
+			elif char_cursor == len(oe_text) - 1:
+				clause_tuples.append(
+					(
+						oe_text[starting_clause_index:],
+						""
+					)
+				)
 
-		for digit in range(0, 10):
-			oe_text = oe_text.replace(str(digit), '')
+		for clause_tuple in clause_tuples:
+			oe_clause = clause_tuple[0]
+			oe_punct = clause_tuple[1]
+			oe_words = [oe_word for oe_word in oe_clause.split() if oe_word]
 
-		oe_words = [oe_word for oe_word in oe_text.split() if oe_word]
+			for oe_word in oe_words:
+				if debug_log:
+					debug_log += " " + oe_word + "["
 
-		for oe_word in oe_words:
-			if is_oe_word(oe_word):
-				syllables = []
+				if is_oe_word(oe_word):
+					if debug_log:
+						debug_log += "Y "
 
-				oe_word = separate_prefix(oe_word)
-				if ' ' in oe_word:
-					subwords = [subword for subword in oe_word.split() if subword]
-					for subword in subwords:
-						syllables.extend(syllabify_word(subword))
-				else:
-					syllables = syllabify_word(oe_word)
+					syllables = []
 
-				transliterated_word = ""
-				for syllable in syllables:
-					if syllable in _transliterations:
-						transliterated_word += _transliterations[syllable]
+					oe_word = separate_prefix(oe_word)
+					if debug_log:
+						debug_log += oe_word + " ("
+
+					if ' ' in oe_word:
+						subwords = [subword for subword in oe_word.split() if subword]
+						for subword in subwords:
+							syllables.extend(syllabify_word(subword))
 					else:
-						transliterated_word += syllable
+						syllables = syllabify_word(oe_word)
 
-					if not transliterated_word.endswith('-'):
-						transliterated_word += "-"
+					transliterated_word = ""
+					for syllable in syllables:
+						if syllable in _transliterations:
+							transliterated_word += _transliterations[syllable]
+						else:
+							transliterated_word += syllable
 
-				if transliterated_word.endswith('-'):
-					transliterated_word = transliterated_word[:-1]
+						if not transliterated_word.endswith('-'):
+							transliterated_word += "-"
 
-				new_text += transliterated_word + " "
-			else:
-				new_text += oe_word + " "
+					if transliterated_word.endswith('-'):
+						transliterated_word = transliterated_word[:-1]
+
+					if debug_log:
+						debug_log += transliterated_word + ")]"
+					new_text += transliterated_word + " "
+				else:
+					if debug_log:
+						debug_log += "N]"
+					new_text += oe_word + " "
+
+			if debug_log:
+				debug_log += oe_punct
+			new_text = new_text.strip() + oe_punct + " "
 
 		text = new_text.strip()
 	except Exception as e:
+		if debug_log:
+			logHandler.log.info("An error occurred while attempting to transliterate, so original text was spoken. Original text: " + text + " [OE DEBUG LOG]: " + debug_log)
 		return text
 
+	if debug_log:
+		logHandler.log.info("[OE DEBUG LOG]: " + debug_log)
 	return text
 
 
@@ -421,7 +469,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				for user_transliteration in user_transliterations:
 					syllable_transliteration = user_transliteration.split()
 					if len(syllable_transliteration) == 2:
-						_transliterations[syllable_transliteration[0]] = syllable_transliteration[1]
+						_transliterations[syllable_transliteration[0].lower()] = syllable_transliteration[1].lower()
 
 		logHandler.log.info("Old English Transliteration add-on enabled.")
 		
