@@ -146,11 +146,12 @@ def is_oe_word(word):
 
 
 def separate_prefix(word):
-	prefixes = ["ā", "æt", "be", "bi", "for", "ge", "ġe", "of", "on", "oð", "oþ", "tō"]
-	# Did not include geond, ofer, under, wið, wiþ, ymb, and 1 or 2 others likely to create as many
-	# false positives as correct identifications for purposes of assigning word stress.
+	prefixes = ["ā", "æt", "be", "bi", "for", "ge", "ġe", "of", "on", "oð", "oþ", "tō", "un"]
+	# Did not include and, geond, ofer, ond, under, wið, wiþ, ymb, and 1 or 2 others likely to
+	# create as many false positives as correct identifications for purposes of assigning word stress.
 
-	exceptions = ["ācs", "āct", "ādl", "āfor", "āgan", "āgen", "āgon", "āht", "āhw", "ān",
+	exceptions = [
+		"ācs", "āct", "ādl", "āfor", "āgan", "āgen", "āgon", "āht", "āhw", "ān",
 		"ætr", "ætt",
 		"bea", "bedd", "bedef", "bedre", "belt", "benc", "benċ", "bend", "benn", "beo", "bera", "bere",
 		"bers", "betl", "betr", "bets",
@@ -162,7 +163,8 @@ def separate_prefix(word):
 		"ofer", "off", "ofo", "ofstl",
 		"onds", "onemn", "ongel", "onġel" "ongem", "onġem", "onsȳn",
 		"oððo", "oððe", "oþþo", "oþþe", "oðþo", "oðþe", "oþðo", "oþðe",
-		"tōcym", "tōdāl", "tōð", "tōþ", "tōweard"]
+		"tōcym", "tōdāl", "tōð", "tōþ", "tōweard"
+	]
 
 	# "for" is going to produce a few more false results than the others because I can't
 	# separate it from "ford(-)", "fore(-)", "forst(-)" without
@@ -172,19 +174,20 @@ def separate_prefix(word):
 	# every instance of the prefix "ofer-" will go unidentified (about a 50% error for ofer-,
 	# in terms of stress assignment, but less disruptive than capturing them all with "of-").
 	# For "on," "onga" will be a problem. For "tō", "tōl" will be.
+	# I had to choose between "on" and "ond", "an" and "and"; the sequence of conditionals based on
+	# either ascending or descending number of characters would cause either "on" and "an"
+	# OR "ond" and "and" always to be chosen as the real prefix.
 	# I don't know how to account for double-prefixation (like tōætȳcan, tōġeþēodan). Rare but occurs.
-
-	# Many of the above can be fixed by starting with len(word) > 4, as I've done now. Was 3. What's lost?
 
 	word_prefix_detached = None
 
 	if len(word) > 4:
 		if word[:1] in prefixes and word[:2] not in exceptions and word[:3] not in exceptions and word[:4] not in exceptions and word[:5] not in exceptions:
-			word_prefix_detached = word.replace(word[:1], word[:1] + " ")
+			word_prefix_detached = word.replace(word[:1], word[:1] + " ", 1)
 		elif word[:2] in prefixes and word[:3] not in exceptions and word[:4] not in exceptions and word[:5] not in exceptions and word[:6] and word[:7] not in exceptions:
-			word_prefix_detached = word.replace(word[:2], word[:2] + " ")
+			word_prefix_detached = word.replace(word[:2], word[:2] + " ", 1)
 		elif word[:3] in prefixes and word[:4] not in exceptions and word[:5] not in exceptions and word[:6] not in exceptions and word[:7] not in exceptions:
-			word_prefix_detached = word.replace(word[:3], word[:3] + " ")
+			word_prefix_detached = word.replace(word[:3], word[:3] + " ", 1)
 
 	if word_prefix_detached:
 		word = word_prefix_detached
@@ -193,20 +196,24 @@ def separate_prefix(word):
 
 
 def syllabify_word(word):
-	vowels = ["a", "ā", "æ", "ǣ", "e", "ē", "i", "ī",
+	vowels = [
+		"a", "ā", "æ", "ǣ", "e", "ē", "i", "ī",
 		"o", "ō", "u", "ū", "y", "ȳ",
 		"ea", "ēa", "eo", "ēo", "ie", "īe",
 		"A", "Ā", "Æ", "Ǣ", "E", "Ē", "I", "Ī",
 		"O", "Ō", "U", "Ū", "Y", "Ȳ",
-		"Ea", "Ēa", "Eo", "Ēo", "Ie", "Īe"]
-	consonants = ["b", "c", "ċ", "d", "f", "g", "ġ",
+		"Ea", "Ēa", "Eo", "Ēo", "Ie", "Īe"
+	]
+	consonants = [
+		"b", "c", "ċ", "d", "f", "g", "ġ",
 		"h", "k", "l", "m", "n", "p", "r",
 		"s", "t", "þ", "ð", "w", "x", "z",
 		"cg", "ng", "sc",
 		"B", "C", "Ċ", "D", "F", "G", "Ġ",
 		"H", "K", "L", "M", "N", "P", "R",
 		"S", "T", "Þ", "Ð", "W", "X", "Z",
-		"Sc"]
+		"Sc"
+	]
 
 	syllables_of_word = []
 	cursor = len(word) - 1
@@ -217,10 +224,10 @@ def syllabify_word(word):
 		syllable_start_marker = None
 
 		if cursor == 0:  # This block catches 1- and 2-letter words & makes sure 0 is always syllable start.
-			syllable_start_marker = cursor  # adjustment + 1
+			syllable_start_marker = cursor
 		elif cursor == 1 and len(word) == 2:  # combined 2 if statements
 			cursor = 0
-			syllable_start_marker = cursor  # adjustment + 1
+			syllable_start_marker = cursor
 
 		elif word[cursor] in vowels:  # This block moves cursor to start of diphthongs and digraphs.
 			if word[cursor - 1:cursor + 1] in vowels:
@@ -229,26 +236,29 @@ def syllabify_word(word):
 			if word[cursor - 1:cursor + 1] in consonants:
 				cursor -= 1
 
-		if word[cursor] in vowels:
+		if cursor == 0:
+			syllable_start_marker = cursor
+
+		elif word[cursor] in vowels:
 			if word[cursor - 1] in vowels:
-				syllable_start_marker = cursor  # adjustment + 1
+				syllable_start_marker = cursor
 			elif word[cursor - 1] in consonants:
 				if cursor > 3:
 					if word[cursor - 2:cursor] in consonants:
 						cursor -= 2
 					else:
 						cursor -= 1
-					syllable_start_marker = cursor  # adjustment + 1
-				elif cursor == 3:  # changed if to elif
+					syllable_start_marker = cursor
+				elif cursor == 3:
 					if word[cursor - 2:cursor] in consonants:
 						cursor -= 2
 					elif word[1] in consonants and word[0] in consonants:
 						cursor = 0
 					else:
 						cursor -= 1
-					syllable_start_marker = cursor  # adjustment + 1
+					syllable_start_marker = cursor
 
-		elif word[cursor] in consonants:  # changed elif to if
+		elif word[cursor] in consonants:
 			if cursor == 2:
 				if word[1] and word[0] in consonants:
 					cursor = 0
@@ -257,19 +267,31 @@ def syllabify_word(word):
 						cursor = 0
 					elif word[0:2] in vowels:
 						cursor = 0
-				syllable_start_marker = cursor  # adjustment + 1
+				syllable_start_marker = cursor
 			if cursor == 1:
 				if word[0] in consonants:
 					cursor = 0
-					syllable_start_marker = cursor  # adjustment + 1
+					syllable_start_marker = cursor
 				if word[0] and word[2] in vowels:
-					syllable_start_marker = cursor  # adjustment + 1
+					syllable_start_marker = cursor
 
 		if syllable_start_marker is not None:
-			syllable_of_word = word[syllable_start_marker:syllable_end_marker]  # adjustment - 1
+			syllable_of_word = word[syllable_start_marker:syllable_end_marker]
+			syllable_contains_vowel = False
+
+			for character in syllable_of_word:
+				if character in vowels:
+					syllable_contains_vowel = True
+					break
+
+			if not syllable_contains_vowel:
+				syllable_start_marker = None
+
+		if syllable_start_marker is not None:
+			syllable_of_word = word[syllable_start_marker:syllable_end_marker]
 			syllables_of_word.append(syllable_of_word)
-			if syllable_start_marker > 0:  # adjustment 1
-				syllable_end_marker = syllable_start_marker  # adjustment - 1
+			if syllable_start_marker > 0:
+				syllable_end_marker = syllable_start_marker
 
 		cursor -= 1
 
