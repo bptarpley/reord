@@ -8,7 +8,7 @@ Due to time constraints, it was determined that developing a full-fledged langua
 
 ## Installation
 
-At present, the NVDA Screen Reader is only available for the Windows operating system. Upon installing NVDA, a user can then download [this packaged add-on file](https://github.com/bptarpley/nvda-transliterate-oe/raw/master/transliterate-oe-2020.00.nvda-addon). Once downloaded, most of the time a user can double-click on the file, prompting NVDA to ask whether to trust and install the add-on. Occasionally, however, the .nvda-addon file extension is not associated with NVDA. If this is the case, the user can manually install the add-on by bringing up the NVDA menu (assuming the default "NVDA key" is the Insert key, you can bring it up by pressing Insert+n), going to Tools->Manage Add-ons->Install and choosing the downloaded file.
+At present, the NVDA Screen Reader is only available for the Windows operating system. Upon installing NVDA, a user can then download [this packaged add-on file](https://github.com/bptarpley/reord/raw/master/transliterate-oe-2020.00.nvda-addon). Once downloaded, most of the time a user can double-click on the file, prompting NVDA to ask whether to trust and install the add-on. Occasionally, however, the .nvda-addon file extension is not associated with NVDA. If this is the case, the user can manually install the add-on by bringing up the NVDA menu (assuming the default "NVDA key" is the Insert key, you can bring it up by pressing Insert+n), going to Tools->Manage Add-ons->Install and choosing the downloaded file.
 
 ## Using the Add-On
 
@@ -33,8 +33,8 @@ You can have as many lines (syllable + transliteration pairs) in the file as you
 
 This repo is a fork of https://github.com/yplassiard/nvda-translate, an add-on developed by Yannick Plassiard for speaking translated versions of text. We chose to fork the above repository since it was doing similar things to what we intended, and while we have done our best to understand how NVDA add-ons work, we appreciated not having to start from scratch.
 
-The algorithms (written in Python) for detecting whether a word is an Old English word, for separating prefixes, and for syllabifying can all be found in [this file](https://github.com/bptarpley/nvda-transliterate-oe/blob/master/addon/globalPlugins/transliterate/__init__.py), and could easily be adapted for other purposes.
+The algorithms (written in Python) for detecting whether a word is an Old English word, for separating prefixes, and for syllabifying can all be found in [this file](https://github.com/bptarpley/reord/blob/master/addon/globalPlugins/transliterate/__init__.py), and could easily be adapted for other purposes.
 
-The default transliterations of syllables can be found in [this file](https://github.com/bptarpley/nvda-transliterate-oe/blob/master/addon/globalPlugins/transliterate/transliterations.json) (stored in JSON format).
+The default transliterations of syllables can be found in [this file](https://github.com/bptarpley/reord/blob/master/addon/globalPlugins/transliterate/transliterations.json) (stored in JSON format).
 
 
