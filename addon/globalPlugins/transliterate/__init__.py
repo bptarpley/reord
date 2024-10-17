@@ -10,6 +10,7 @@ import os, sys, time, codecs, re
 import globalVars
 import globalPluginHandler, logHandler, scriptHandler
 from string import punctuation
+from typing import Optional
 
 try:
 	import api, controlTypes
